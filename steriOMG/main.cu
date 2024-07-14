@@ -74,17 +74,18 @@ int main()
         auto start = std::chrono::high_resolution_clock::now();
         map_tile<<<gridSize, blockSize>>>(d_frames, width / 2, height, maxShift, width * height);
         cudaDeviceSynchronize();
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-        double fps = framesInBatch / elapsed.count();
-        std::cout << "Kernel execution time: " << elapsed.count() << " seconds" << std::endl;
-        std::cout << "Frames per second: " << fps << std::endl;
 
         // Copy results back to CPU
         for (int i = 0; i < framesInBatch; i++)
         {
             cudaMemcpy(framesRGBA[i].data, d_frames + i * width * height, frameSize, cudaMemcpyDeviceToHost);
         }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        double fps = framesInBatch / elapsed.count();
+        std::cout << "Kernel execution time: " << elapsed.count() << " seconds" << std::endl;
+        std::cout << "Frames per second: " << fps << std::endl;
 
         // Convert back to BGR and write to output video
         for (int i = 0; i < framesInBatch; i++)
