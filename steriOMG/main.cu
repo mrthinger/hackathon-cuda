@@ -1,21 +1,18 @@
 #include <opencv2/opencv.hpp>
 #include <cuda_runtime.h>
 
-__global__ void map_tile(uchar4 *d_frames, int w, int h, int maxShift, int frameSize)
+__global__ void map_frames(uchar4 *d_frames, int w, int h, int maxShift)
 {
-    int frameIdx = blockIdx.z;
     if (blockIdx.y >= h || blockIdx.x >= w)
         return; // tile bounds
-    uchar4 *d_frame = d_frames + frameIdx * frameSize;
+    uchar4 *d_frame = d_frames + blockIdx.z * w * h * 2;
     uchar4 *outPx = d_frame + blockIdx.y * w * 2 + blockIdx.x + w;
-    int offset = (*outPx).x * maxShift / 256;
+    int offset = (*outPx).x * maxShift / 256; // TODO: right shift instead of div
     uchar4 *minInPx = d_frame + (blockIdx.y * w * 2);
     uchar4 *maxInPx = d_frame + (blockIdx.y * w * 2 + w - 1);
     uchar4 *inPx = outPx - w - offset;
-    if (inPx < minInPx)
-        inPx = minInPx;
-    if (inPx > maxInPx)
-        inPx = maxInPx;
+    if (inPx < minInPx) inPx = minInPx;
+    if (inPx > maxInPx) inPx = maxInPx;
     *outPx = *inPx;
 }
 
@@ -67,12 +64,11 @@ int main()
             cudaMemcpy(d_frames + i * width * height, framesRGBA[i].data, frameSize, cudaMemcpyHostToDevice);
         }
 
-        // Call map_tile kernel for all frames in the batch
         dim3 blockSize(1, 1, 1);
         dim3 gridSize(width / 2, height, framesInBatch);
         int maxShift = 32; // Adjust this value as needed
         auto start = std::chrono::high_resolution_clock::now();
-        map_tile<<<gridSize, blockSize>>>(d_frames, width / 2, height, maxShift, width * height);
+        map_frames<<<gridSize, blockSize>>>(d_frames, width / 2, height, maxShift);
         cudaDeviceSynchronize();
 
         // Copy results back to CPU
