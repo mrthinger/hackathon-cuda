@@ -9,9 +9,3 @@ __global__ void map_tile(uchar4* d_frame, int w, int h, int maxShift) {
     if (inPx > maxInPx) inPx = maxInPx;
     *outPx = *inPx;
 }
-
-int main() {
-    // TODO: load video & copy to GPU
-    // TODO: NVDEC frames
-    // TODO: for tiles: map_tile
-}
