@@ -5,7 +5,6 @@ const int SHIFT_SIZE = 32;
 
 __global__ void map_frames(uchar4 *d_frames, int w, int h)
 {
-    if (blockIdx.y >= h || blockIdx.x >= w) return;
     uchar4 *d_frame = d_frames + blockIdx.z * w * h * 2;
     uchar4 *outPx = d_frame + blockIdx.y * w * 2 + blockIdx.x + w;
     uchar4 *rowStart = d_frame + (blockIdx.y * w * 2);
