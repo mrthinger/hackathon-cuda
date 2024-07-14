@@ -1,0 +1,7 @@
+torch>=2.3.0
+torchvision
+numpy
+ffmpeg-python
+tqdm
+python-dotenv
+pydantic
