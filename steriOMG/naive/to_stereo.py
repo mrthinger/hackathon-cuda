@@ -19,7 +19,10 @@ def create_side_by_side_video(video_buffer: NDArray, max_shift: int):
     depth_range = max_depth - min_depth
     
     # Precalculate the disparity map using the depth map buffer
-    depth_map = (depth_map - min_depth) / depth_range * max_shift.astype(np.int32)
+    depth_map -= min_depth
+    depth_map /= depth_range
+    depth_map *= max_shift
+    depth_map = depth_map.astype(np.int32)
     
     for i in range(num_frames):
         for y in range(height):
@@ -27,9 +30,7 @@ def create_side_by_side_video(video_buffer: NDArray, max_shift: int):
             shifted_xs = np.clip(np.arange(single_video_width) + shifts, 0, single_video_width - 1)
             for x in range(single_video_width):
                 video_buffer[i, y, x + single_video_width, :] = video_buffer[i, y, shifted_xs[x], :]
-
             # video_buffer[i, y, single_video_width:, :] = video_buffer[i, y, shifted_xs, :]
-            
             pg.update(1)
 
     pg.close()
@@ -64,12 +65,14 @@ def process_video(input_path, output_path, max_shift):
         framerate=video_info.framerate,
         thread_queue_size=8192,
     )
+
     in_original = ffmpeg.input(
         input_path,
         thread_queue_size=8192,
         vn=None,
         sn=None,
     )
+
     process_output = ffmpeg.output(
         in_modified,
         in_original,
@@ -82,62 +85,25 @@ def process_video(input_path, output_path, max_shift):
         **{'q:v': '88'}
     ).overwrite_output().run_async(pipe_stdin=True)
 
-    # pg = tqdm(total=3, unit="chunk")
-    # pg.set_description('converting to stereo')
-
-    # for chunk_start in range(0, video_info.num_frames*2, CHUNK_FRAMES):
-    #     chunk_end = min(chunk_start + CHUNK_FRAMES, video_info.num_frames)
-    #     chunk_frames = chunk_end - chunk_start
-
-    #     pg.set_description('reading buffer')
-    #     for i in range(chunk_frames):
-    #         in_bytes = process_input.stdout.read(video_info.width * video_info.height * 3)
-    #         if not in_bytes:
-    #             break
-
-    #         vbuffer[i, :, :video_info.width, :] = np.frombuffer(in_bytes, np.uint8).reshape(
-    #             [video_info.height, video_info.width, 3]
-    #         )
-
-    #     pg.set_description('processsing buffer')
-    #     vbuffer[:chunk_frames] = create_side_by_side_video(vbuffer[:chunk_frames], max_shift)
-
-    #     pg.set_description('writing buffer')
-    #     for frame in vbuffer[:chunk_frames]:
-    #         process_output.stdin.write(frame.tobytes())
-
-    #     pg.update(1)
-    # pg.close()
-
-
     progress_bar = tqdm(total=video_info.num_frames, unit="frames")
 
     for chunk_start in range(0, video_info.num_frames, CHUNK_FRAMES):
         chunk_end = min(chunk_start + CHUNK_FRAMES, video_info.num_frames)
         chunk_frames = chunk_end - chunk_start
 
-        progress_bar.set_description('read')
+        progress_bar.set_description('read chunk from buffer')
         for i in range(chunk_frames):
             in_bytes = process_input.stdout.read(video_info.width * video_info.height * 3)
-            if not in_bytes:
-                break
-
+            if not in_bytes: break
             vbuffer[i, :, :video_info.width, :] = np.frombuffer(in_bytes, np.uint8).reshape(
                 [video_info.height, video_info.width, 3]
             )
 
-        progress_bar.set_description('process')
+        progress_bar.set_description('process chunk')
         vbuffer[:chunk_frames] = create_side_by_side_video(vbuffer[:chunk_frames], max_shift)
 
-        progress_bar.set_description('write')
+        progress_bar.set_description('write chunk to buffer')
         for frame in vbuffer[:chunk_frames]:
-            # try:
-            #     process_output.stdin.write(frame.tobytes())
-            # except BrokenPipeError:
-            #     print("Broken pipe error occurred. Subprocess may have terminated unexpectedly.")
-            # finally:
-            #     process_output.stdin.close()
-            #     process_output.wait()
             process_output.stdin.write(frame.tobytes())
             progress_bar.update(1)
 
@@ -160,7 +126,7 @@ def main():
         filename = "test.mp4"
 
     filepath = f"./build/depth/{filename}"
-    output_path = f"./build/sbs/88qv-{max_shift}-{filename}"
+    output_path = f"./build/sbs/naive-{max_shift}-{filename}"
 
     process_video(filepath, output_path, max_shift)
 
