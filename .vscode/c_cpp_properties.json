@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/cuda/include",
-                "/usr/include/x86_64-linux-gnu"
+                "/usr/include/x86_64-linux-gnu",
+                "/home/evanp/hackathon-cuda/Video_Codec_SDK_12.2.72/Interface"
             ],
             "defines": [],
             "compilerPath": "/usr/local/cuda/bin/nvcc",
