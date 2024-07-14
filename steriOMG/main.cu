@@ -9,8 +9,7 @@ __global__ void map_frames(uchar4 *d_frames, int w, int h)
     uchar4 *d_frame = d_frames + blockIdx.z * w * h * 2;
     uchar4 *outPx = d_frame + blockIdx.y * w * 2 + blockIdx.x + w;
     uchar4 *rowStart = d_frame + (blockIdx.y * w * 2);
-    uchar4 *inPx = max(rowStart, min(outPx - w - ((*outPx).x * SHIFT_SIZE >> 8 /* >>8=/256*/), rowStart + w - 1));
-    *outPx = *inPx;
+    *outPx = *(max(rowStart, min(rowStart + w - 1, outPx - w - ((*outPx).x * SHIFT_SIZE >> 8 /* >>8=/256*/))));
 }
 
 int main()
