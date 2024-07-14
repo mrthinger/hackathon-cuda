@@ -55,10 +55,14 @@ def create_side_by_side_video(video_buffer: cp.ndarray, max_shift: int):
     # Launch the kernel
     grid_size = (num_frames, height)
     block_size = (single_video_width, 1, 1)
+    # shift_video(
+    #     np.int32(num_frames), np.int32(height), np.int32(single_video_width), 
+    #     np.int32(width), np.int32(max_shift), depth_map.data.ptr, 
+    #     video_buffer.data.ptr, shifted_video_gpu.data.ptr, 
+    #     block=block_size, grid=grid_size
+    # )
     shift_video(
-        np.int32(num_frames), np.int32(height), np.int32(single_video_width), 
-        np.int32(width), np.int32(max_shift), depth_map.data.ptr, 
-        video_buffer.data.ptr, shifted_video_gpu.data.ptr, 
+        video_buffer.data.ptr, np.int32(width), np.int32(height), np.int32(max_shift),
         block=block_size, grid=grid_size
     )
 
@@ -134,7 +138,7 @@ def process_video(input_path, output_path, max_shift):
 
         # Compute the mapping
         progress_bar.set_description('process')
-        # vbuffer[:chunk_frames] = create_side_by_side_video(vbuffer[:chunk_frames], max_shift)
+        vbuffer[:chunk_frames] = create_side_by_side_video(vbuffer[:chunk_frames], max_shift)
 
         # Write back to the buffer
         progress_bar.set_description('write')
