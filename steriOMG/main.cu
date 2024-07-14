@@ -1,7 +1,10 @@
 #include <cuda_runtime.h>
+extern "C"
+{
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
+}
 
 __global__ void map_tile(uchar4 *d_frame, int w, int h, int maxShift)
 {
@@ -29,7 +32,7 @@ int main()
     int videoStreamIndex = -1;
 
     // Open input file
-    if (avformat_open_input(&formatContext, "input_video.mp4", NULL, NULL) != 0)
+    if (avformat_open_input(&formatContext, "fixed.mp4", NULL, NULL) != 0)
     {
         fprintf(stderr, "Could not open input file\n");
         return -1;
