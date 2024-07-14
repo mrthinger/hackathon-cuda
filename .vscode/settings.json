@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.spice": "spice",
+        "chrono": "cpp"
+    }
+}
