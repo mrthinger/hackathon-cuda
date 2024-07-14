@@ -7,7 +7,7 @@ __global__ void map_frames(uchar4 *d_frames, int w, int h, int maxShift)
         return; // tile bounds
     uchar4 *d_frame = d_frames + blockIdx.z * w * h * 2;
     uchar4 *outPx = d_frame + blockIdx.y * w * 2 + blockIdx.x + w;
-    int offset = (*outPx).x * maxShift / 256; // TODO: right shift instead of div
+    int offset = (*outPx).x * maxShift >> 8; // shift to divide
     uchar4 *minInPx = d_frame + (blockIdx.y * w * 2);
     uchar4 *maxInPx = d_frame + (blockIdx.y * w * 2 + w - 1);
     uchar4 *inPx = outPx - w - offset;
