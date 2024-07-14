@@ -1,10 +1,13 @@
-__global__ void map_tile(uchar4* d_inframe, uchar4* d_outframe, int w, int h, int xoffset, int yoffset) {
-    if (threadIdx.y + yoffset > h || threadIdx.x + xoffset > w) return; // tile bounds
-    int yOutCoord = threadIdx.y + yoffset;
-    int xOutCoord = threadIdx.x + xoffset;
-    int outIdx = (threadIdx.y + yoffset) * w + (threadIdx.x + xoffset); // FIXME: skip right half of frame
-    int inIdx = outIdx; // TODO: horizontal offset
-    d_outframe[outIdx] = d_inframe[inIdx];
+__global__ void map_tile(uchar4* d_frame, int w, int h, int maxShift) {
+    if (blockIdx.y > h || blockIdx.x > w) return; // tile bounds
+    uchar4* outPx = d_frame + blockIdx.y * w * 2 + blockIdx.x + w;
+    int offset = (*outPx).x * maxShift / 256;
+    uchar4* minInPx = d_frame + (blockIdx.y * w * 2);
+    uchar4* maxInPx = d_frame + (blockIdx.y * w * 2 + w - 1);
+    uchar4* inPx = outPx - w + offset;
+    if (inPx < minInPx) inPx = minInPx;
+    if (inPx > maxInPx) inPx = maxInPx;
+    *outPx = *inPx;
 }
 
 int main() {
