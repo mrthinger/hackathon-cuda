@@ -7,7 +7,7 @@ __global__ void map_frames(uchar4 *d_frames, int w, int h)
     uchar4 *d_frame = d_frames + blockIdx.z * w * h * 2;
     uchar4 *rowStart = d_frame + blockIdx.y * w * 2;
     uchar4 *outPx = rowStart + w + blockIdx.x;
-    *outPx = *(max(rowStart, outPx - w - ((*outPx).x >> DEPTHSHIFT)));
+    *outPx = *(uchar4*)(max((uintptr_t)rowStart, (uintptr_t)(outPx - w - ((*outPx).x >> DEPTHSHIFT))));
 }
 
 int main()
