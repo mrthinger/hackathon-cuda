@@ -24,7 +24,7 @@ int main()
     int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     int totalFrames = cap.get(cv::CAP_PROP_FRAME_COUNT);
 
-    cv::VideoWriter writer("processed_video.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.get(cv::CAP_PROP_FPS), cv::Size(width, height));
+    cv::VideoWriter writer("processed_video.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.get(cv::CAP_PROP_FPS), cv::Size(sbsWidth, height));
 
     const int batchSize = 32;
 
@@ -45,7 +45,7 @@ int main()
             if (frames[i].empty())
                 break;
             cv::cvtColor(frames[i], framesRGBA[i], cv::COLOR_BGR2RGBA);
-            cudaMemcpy(d_frames + i * width * height, framesRGBA[i].data, frameSize, cudaMemcpyHostToDevice);
+            cudaMemcpy(d_frames + i * sbsWidth * height, framesRGBA[i].data, frameSize, cudaMemcpyHostToDevice);
         }
 
         dim3 gridSize(sbsWidth / 2, height, framesInBatch);
@@ -54,7 +54,7 @@ int main()
 
         for (int i = 0; i < framesInBatch; i++)
         {
-            cudaMemcpy(framesRGBA[i].data, d_frames + i * width * height, frameSize, cudaMemcpyDeviceToHost);
+            cudaMemcpy(framesRGBA[i].data, d_frames + i * sbsWidth * height, frameSize, cudaMemcpyDeviceToHost);
         }
 
         auto end = std::chrono::high_resolution_clock::now();
